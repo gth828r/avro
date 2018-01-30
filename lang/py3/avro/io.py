@@ -135,9 +135,19 @@ def Validate(expected_schema, datum):
     return any(Validate(union_branch, datum)
                for union_branch in expected_schema.schemas)
   elif schema_type in ['record', 'error', 'request']:
-    return (isinstance(datum, dict)
-        and all(Validate(field.type, datum.get(field.name))
-                for field in expected_schema.fields))
+    if isinstance(datum, dict):
+        for k in datum.keys():
+            found = False
+            for field in expected_schema.fields:
+                if k == field.name:
+                    found = True
+                    if not Validate(field.type, datum.get(k)):
+                        return False
+            if not found:
+                return False
+        return True
+    else:
+        return False
   else:
     raise AvroTypeException('Unknown Avro schema type: %r' % schema_type)
 

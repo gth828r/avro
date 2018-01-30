@@ -133,9 +133,20 @@ def validate(expected_schema, datum):
   elif schema_type in ['union', 'error_union']:
     return True in [validate(s, datum) for s in expected_schema.schemas]
   elif schema_type in ['record', 'error', 'request']:
-    return (isinstance(datum, dict) and
-      False not in
-        [validate(f.type, datum.get(f.name)) for f in expected_schema.fields])
+    if isinstance(datum, dict):
+        for k in datum.keys():
+            found = False
+            for f in expected_schema.fields:
+                if k == f.name:
+                    found = True
+                    if not validate(f.type, datum.get(k)):
+                        return False
+            if not found:
+                return False
+        return True
+    else:
+        return False
+        
 
 #
 # Decoder/Encoder
